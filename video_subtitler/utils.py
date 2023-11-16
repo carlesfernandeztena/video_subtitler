@@ -3,6 +3,7 @@ from typing import Iterator, TextIO
 
 
 def str2bool(string):
+    """Utility for converting strings to Boolean format"""
     string = string.lower()
     str2val = {"true": True, "false": False}
 
@@ -13,7 +14,16 @@ def str2bool(string):
             f"Expected one of {set(str2val.keys())}, got {string}")
 
 
-def format_timestamp(seconds: float, always_include_hours: bool = False):
+def format_timestamp(seconds: float, always_include_hours: bool = False) -> str:
+    """Formatting utility, from seconds to timestamp.
+
+    Args:
+        seconds (float): number of seconds (e.g. 64.230)
+        always_include_hours (bool, optional): Include hours even if they are 00. Defaults to False.
+
+    Returns:
+        str: timestamp in string format (e.g. 00:01:04.230)
+    """
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
 
@@ -31,6 +41,12 @@ def format_timestamp(seconds: float, always_include_hours: bool = False):
 
 
 def write_srt(transcript: Iterator[dict], file: TextIO):
+    """Utility to write subtitle files.
+
+    Args:
+        transcript (Iterator[dict]): _description_
+        file (TextIO): Output file
+    """
     for i, segment in enumerate(transcript, start=1):
         print(
             f"{i}\n"
@@ -43,4 +59,5 @@ def write_srt(transcript: Iterator[dict], file: TextIO):
 
 
 def filename(path):
+    """Retrieve base filename"""
     return os.path.splitext(os.path.basename(path))[0]

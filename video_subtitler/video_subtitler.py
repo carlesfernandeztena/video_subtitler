@@ -1,7 +1,10 @@
+"""Video subtitler module"""
+
 import argparse
 import os
 import tempfile
 import warnings
+from typing import List
 
 import ffmpeg
 import whisper
@@ -9,22 +12,15 @@ import whisper
 from .utils import filename, str2bool, write_srt
 
 
-def main(args):
-    
-    os.makedirs(args.output_dir, exist_ok=True)
+def get_audio(paths: List[str]) -> dict:
+    """Get paths to audio files corresponding to the input videos
 
-    if args.model_name.endswith(".en"):
-        warnings.warn(
-            f"{args.model_name} is an English-only model, forcing English detection.")
-        
-    model = whisper.load_model(args.model_name)
-    audios = get_audio(args.pop("video"))
-    subtitles = get_subtitles(
-        audios, args.output_srt or args.srt_only, args.output_dir, lambda audio_path: model.transcribe(audio_path, **args)
-    )
+    Args:
+        paths (List[str]): list of input video paths
 
-
-def get_audio(paths):
+    Returns:
+        dict: dict with paths to audio files extracted from the videos.
+    """
     temp_dir = tempfile.gettempdir()
 
     audio_paths = {}
@@ -43,7 +39,18 @@ def get_audio(paths):
     return audio_paths
 
 
-def get_subtitles(audio_paths: list, output_srt: bool, output_dir: str, transcribe: callable):
+def get_subtitles(audio_paths: List[str], output_srt: bool, output_dir: str, transcribe: callable) -> str:
+    """Generate subtitle from video, return the subtitle location.
+
+    Args:
+        audio_paths (list): list of paths to the autio files
+        output_srt (bool): output subtitle file to be created
+        output_dir (str): output directory
+        transcribe (callable): transcribe function of the model
+
+    Returns:
+        str: Created subtitle file
+    """
     subtitles_path = {}
 
     for path, audio_path in audio_paths.items():
@@ -68,7 +75,7 @@ def get_subtitles(audio_paths: list, output_srt: bool, output_dir: str, transcri
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    formatter_class = argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("video", nargs="+", type=str,
                         help="paths to video files to transcribe")
     parser.add_argument("--model", default="small",
@@ -85,4 +92,17 @@ if __name__ == '__main__':
     help="Language of the video. If unset, it will be automatically detected.")
 
     args = parser.parse_args()
-    main(args)
+    
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    if args.model_name.endswith(".en"):
+        warnings.warn(
+            f"{args.model_name} is an English-only model, forcing English detection.")
+        
+    MODEL = whisper.load_model(args.model_name)
+    audios = get_audio(args.pop("video"))
+    subtitle_path = get_subtitles(
+        audios, args.output_srt or args.srt_only, args.output_dir, lambda audio_path: MODEL.transcribe(audio_path, **args)
+    )
+    print(f"Subtitle path has been successfully created: {subtitle_path}")
+
